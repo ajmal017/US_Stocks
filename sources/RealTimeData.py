@@ -32,7 +32,7 @@ def delete_table_data(stock_symbol_list):
             mycursor.close()
             mydb.close()
 
-def get_real_time_data(steamNum, durationStr, stock_symbol_list, host="127.0.0.1", port=7496, clientId=1):
+def get_real_time_data(steamNum, durationStr, stock_symbol_list, host="127.0.0.1", port=7496, clientId=1, is_insert=True):
     """
     https://interactivebrokers.github.io/tws-api/classIBApi_1_1EClient.html#aad87a15294377608e59aec1d87420594
     :param steamNum:
@@ -52,40 +52,61 @@ def get_real_time_data(steamNum, durationStr, stock_symbol_list, host="127.0.0.1
             for i in stock_symbol_list:
                 print("Getting " + i + " real time data...")
                 contract = ibsy.Stock(i, 'SMART', 'USD', primaryExchange='NASDAQ')
+                # bars = ib.reqHistoricalData(contract, endDateTime='', durationStr=durationStr,
+                #                             barSizeSetting='1 min', whatToShow='MIDPOINT', useRTH=True)
                 bars = ib.reqHistoricalData(contract, endDateTime='', durationStr=durationStr,
-                                            barSizeSetting='1 min', whatToShow='MIDPOINT', useRTH=True)
+                                            barSizeSetting='1 min', whatToShow='TRADES', useRTH=True)
 
                 # convert to pandas dataframe:
                 df = ibsy.util.df(bars)
 
-                query = "INSERT IGNORE INTO IB_TODAY_" + i + " VALUES (%s, '" + i + "', %s, %s, %s, %s, %s, %s);"
-                for index, row in df.iterrows():
-                    insert_data = (str(row.date.strftime("%Y%m%d")),
-                                   str(row.date.strftime("%H:%M:%S")),
-                                   str(row.open),
-                                   str(row.high),
-                                   str(row.low),
-                                   str(row.close),
-                                   str(row.volume))
-                    try:
-                        mydb = DBConnection().db_mysql_connector()
-                        mycursor = mydb.cursor()
-                        mycursor.execute(query, insert_data)
-                        mydb.commit()
-                    except Exception as e:
-                        print(e)
-                        return None
-                    finally:
-                        mycursor.close()
-                        mydb.close()
+                if is_insert:
+                    query = "INSERT IGNORE INTO IB_TODAY_" + i + " VALUES (%s, '" + i + "', %s, %s, %s, %s, %s, %s);"
+                    for index, row in df.iterrows():
+                        insert_data = (str(row.date.strftime("%Y%m%d")),
+                                       str(row.date.strftime("%H:%M:%S")),
+                                       str(row.open),
+                                       str(row.high),
+                                       str(row.low),
+                                       str(row.close),
+                                       str(row.volume))
+                        try:
+                            mydb = DBConnection().db_mysql_connector()
+                            mycursor = mydb.cursor()
+                            mycursor.execute(query, insert_data)
+                            mydb.commit()
+                        except Exception as e:
+                            print(e)
+                            return None
+                        finally:
+                            mycursor.close()
+                            mydb.close()
+                else:
+                    print(df)
+                    print(bars)
             print("End of getting real time data...")
         end_time = time.time()
         sleep_time = time.sleep(max(0, 60 - (end_time - start_time)))
         print("Sleep time: ", sleep_time)
+        ib.disconnect()
+        ib.waitOnUpdate(timeout=0.1)
 
 if __name__ == '__main__':
-    steamNum = 2
-    durationStr = '120 S'
-    # delete_table_data(stock_symbol_list)
-    print(stock_symbol_list)
+    delete_table_data(stock_symbol_list)
+
+    steamNum = 1
+    durationStr = '1 D'
+    # print(stock_symbol_list)
     get_real_time_data(steamNum, durationStr, stock_symbol_list)
+
+    steamNum = 1
+    durationStr = '600 S'
+    get_real_time_data(steamNum, durationStr, stock_symbol_list)
+    #
+    # steamNum = 1
+    # durationStr = '120 S'
+    # get_real_time_data(steamNum, durationStr, stock_symbol_list)
+
+    # steamNum = 1
+    # durationStr = '3600 S'
+    # get_real_time_data(steamNum, durationStr, stock_symbol_list)

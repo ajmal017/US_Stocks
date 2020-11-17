@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 class StockMethod:
-    def __init__(self, symbol, freq):
+    def __init__(self, symbol="", freq=""):
         self.symbol = symbol
         self.freq = freq
 
@@ -61,8 +61,11 @@ class StockMethod:
             condition_list.append(end_date_condition)
 
         condition_string = ""
-        if bool(condition_list): # non-empty list
+        if len(condition_list) >= 2: # non-empty list
             condition_string = " WHERE " + (" AND ".join(condition_list))
+            print(condition_string)
+        elif len(condition_list) == 1:
+            condition_string = " WHERE " + condition_list[0]
             print(condition_string)
 
         query = "SELECT * FROM " + table_name + condition_string + ";"
@@ -99,7 +102,7 @@ class StockMethod:
             end (string): date or datetime
 
         Return:
-            df: stock data
+            df: stock data (DateTime, Ticker, Open, High, Low, Close, Volume, TotalTrades)
         """
         table_name = (self.symbol + '_' + self.freq).lower()
 
@@ -122,3 +125,41 @@ class StockMethod:
             return None
         finally:
             db_con.close()
+
+    def get_latest_date(self):
+        if len(self.symbol) > 0:
+            query = "SELECT max(Date) FROM " + self.symbol.lower() + ";"
+        else:
+            return None
+
+        try:
+            mydb = DBConnection().db_mysql_connector()
+            mycursor = mydb.cursor()
+            mycursor.execute(query)
+            myresult = mycursor.fetchall()
+            return [x[0] for x in myresult][0]
+        except Exception as e:
+            print(e)
+            return None
+        finally:
+            mycursor.close()
+            mydb.close()
+
+    def get_latest_date_freq(self):
+        if len(self.symbol) > 0 and len(self.freq) > 0:
+            query = "SELECT max(Date(DateTime)) FROM " + (self.symbol + '_' + self.freq).lower() + ";"
+        else:
+            return None
+
+        try:
+            mydb = DBConnection().db_mysql_connector()
+            mycursor = mydb.cursor()
+            mycursor.execute(query)
+            myresult = mycursor.fetchall()
+            return [x[0] for x in myresult][0]
+        except Exception as e:
+            print(e)
+            return None
+        finally:
+            mycursor.close()
+            mydb.close()

@@ -1,0 +1,3 @@
+cd /d E:\Python_scripts\US_Stocks
+activate stock
+jupyter notebook --NotebookApp.max_buffer_sizeInt=5368709120
