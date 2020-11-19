@@ -1,0 +1,10 @@
+Access key ID: AKIA2CYVPJACN4AIM2XG
+Secret access key: 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
+
+cd /d E:/Python_scripts/US_Stocks
+aws configure
+aws s3 sync s3://client-685-tony-us-equity-1min-trades-zipday/2020/ data/NDX100_zip_data/2020/ --request-payer requester
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Sync all data files:
+aws s3 sync s3://client-685-tony-us-equity-1min-trades-zipday data/NDX100_zip_data --request-payer requester

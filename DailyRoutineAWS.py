@@ -69,6 +69,8 @@ def db_insert_latest_data(data_dir, zip_data_dir):
                 for sql_insert_table in sql_load_data(stock_symbol_list, unzip_location + '/' + filename[:-4]):
                     f.write("%s\n" % sql_insert_table)
 
+
+
 if __name__ == '__main__':
     # step 1: use aws command to update zip file
 
